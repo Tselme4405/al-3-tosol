@@ -19,29 +19,35 @@ export default function ImageAnalysis() {
   };
   const handleGenerate = async () => {
     if (!selectedFile) return;
-    setIsAnalyzing(true);
-    const formData = new FormData();
-    formData.append("image", selectedFile);
 
-    console.log("formData", formData);
+    setIsAnalyzing(true);
+    setError?.(""); // хэрвээ error state байгаа бол
+    const formData = new FormData();
+    formData.append("image", selectedFile); // ✅ backend чинь upload.single("image")
 
     try {
-      const res = await fetch(
+      const { data } = await axios.post(
         "https://al-3-tosol-back-end.onrender.com/upload",
+        formData,
         {
-          method: "POST",
-          body: formData,
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
         }
       );
-      const data = await res.json();
+
       // TODO: data-с бодит ingredients авах
       setIngredients(data);
     } catch (err) {
       console.error("Upload failed", err);
+
+      const msg = err?.response?.data?.error || err?.message || "Upload failed";
+      setError?.(msg);
     } finally {
       setIsAnalyzing(false);
     }
   };
+
   const handleReset = () => {
     setSelectedFile(null);
     setPreviewUrl(null);

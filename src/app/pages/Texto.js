@@ -92,11 +92,6 @@ export default function Texto() {
   const [ingredients, setIngredients] = useState(null); // null | [] | [{name}]
   const [error, setError] = useState("");
 
-  const API_BASE =
-    process.env.NEXT_PUBLIC_API_URL ||
-    "https://al-3-tosol-back-end.onrender.com";
-  const canGenerate = useMemo(() => text.trim().length > 0, [text]);
-
   const handleGenerate = async () => {
     if (!canGenerate) return;
 
@@ -105,25 +100,28 @@ export default function Texto() {
     setIngredients(null);
 
     try {
-      const res = await fetch(`${API_BASE}/ingredient-generator`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ description: text }),
-      });
+      const { data } = await axios.post(
+        `${API_BASE}/ingredient-generator`,
+        { description: text },
+        { headers: { "Content-Type": "application/json" } }
+      );
 
-      const data = await res.json();
+      // ✅ Back-end чинь { result: "..." } буцаадаг тул эхлээд result-г авна
+      // Хэрвээ чи parse функцтэй бол тэрийгээ энд хэрэглэ
+      const resultText = data?.result || "";
 
-      if (!res.ok) {
-        throw new Error(data?.error || "Failed to recognize ingredients");
-      }
-
-      // ✅ Back-end өөрчлөхгүй: { result: "..." } гэж ирнэ
-      const parsed = parseResultToIngredients(data?.result);
+      // Хэрвээ чи өмнө нь parseResultToIngredients() хийсэн бол:
+      const parsed = parseResultToIngredients(resultText);
 
       setIngredients(parsed);
-    } catch (e) {
-      console.error(e);
-      setError(e?.message || "Something went wrong");
+    } catch (err) {
+      console.error(err);
+
+      // axios error message
+      const msg =
+        err?.response?.data?.error || err?.message || "Something went wrong";
+
+      setError(msg);
       setIngredients([]);
     } finally {
       setLoading(false);

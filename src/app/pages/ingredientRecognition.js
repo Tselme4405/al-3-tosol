@@ -17,27 +17,26 @@ export default function IngredientRecognition() {
     setResultImage(null);
 
     try {
-      const res = await fetch(
+      const { data } = await axios.post(
         "https://al-3-tosol-back-end.onrender.com/image",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ prompt: text }),
-        }
+        { prompt: text },
+        { headers: { "Content-Type": "application/json" } }
       );
 
-      const data = await res.json();
-
-      if (!res.ok) {
+      // ✅ backend: { success: true, image: "data:image/png;base64,..." }
+      if (!data?.success || !data?.image) {
         setError(data?.error || "Failed to generate");
         return;
       }
 
-      // ✅ backend чинь: { success: true, image: "data:image/png;base64,..." }
       setResultImage(data.image);
-    } catch (e) {
-      setError("Server connection error");
-      console.error(e);
+    } catch (err) {
+      console.error(err);
+
+      const msg =
+        err?.response?.data?.error || err?.message || "Server connection error";
+
+      setError(msg);
     } finally {
       setIsAnalyzing(false);
     }
