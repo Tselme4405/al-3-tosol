@@ -1,6 +1,6 @@
 "use client";
 import { useRef, useState } from "react";
-
+import axios from "axios";
 export default function IngredientRecognition() {
   const [prompt, setPrompt] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
