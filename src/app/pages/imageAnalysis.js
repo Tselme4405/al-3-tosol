@@ -26,10 +26,13 @@ export default function ImageAnalysis() {
     console.log("formData", formData);
 
     try {
-      const res = await fetch("https://al-3-tosol.onrender.com/upload", {
-        method: "POST",
-        body: formData,
-      });
+      const res = await fetch(
+        "https://al-3-tosol-back-end.onrender.com/upload",
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
       const data = await res.json();
       // TODO: data-с бодит ingredients авах
       setIngredients(data);

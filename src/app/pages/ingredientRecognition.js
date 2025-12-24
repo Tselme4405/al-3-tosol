@@ -17,11 +17,14 @@ export default function IngredientRecognition() {
     setResultImage(null);
 
     try {
-      const res = await fetch("https://al-3-tosol.onrender.com/image", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: text }),
-      });
+      const res = await fetch(
+        "https://al-3-tosol-back-end.onrender.com/image",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prompt: text }),
+        }
+      );
 
       const data = await res.json();
 
