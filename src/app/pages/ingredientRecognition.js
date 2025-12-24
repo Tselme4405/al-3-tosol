@@ -17,7 +17,7 @@ export default function IngredientRecognition() {
     setResultImage(null);
 
     try {
-      const res = await fetch("http://localhost:999/image", {
+      const res = await fetch("https://al-3-tosol.onrender.com/image", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt: text }),

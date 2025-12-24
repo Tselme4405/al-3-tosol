@@ -92,7 +92,8 @@ export default function Texto() {
   const [ingredients, setIngredients] = useState(null); // null | [] | [{name}]
   const [error, setError] = useState("");
 
-  const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:999";
+  const API_BASE =
+    process.env.NEXT_PUBLIC_API_URL || "https://al-3-tosol.onrender.com";
   const canGenerate = useMemo(() => text.trim().length > 0, [text]);
 
   const handleGenerate = async () => {

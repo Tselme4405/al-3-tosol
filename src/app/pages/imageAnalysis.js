@@ -26,7 +26,7 @@ export default function ImageAnalysis() {
     console.log("formData", formData);
 
     try {
-      const res = await fetch("http://localhost:999/upload", {
+      const res = await fetch("https://al-3-tosol.onrender.com/upload", {
         method: "POST",
         body: formData,
       });
