@@ -1,6 +1,7 @@
 "use client";
 import { useRef, useState } from "react";
 import axios from "axios";
+
 export default function IngredientRecognition() {
   const [prompt, setPrompt] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -17,25 +18,40 @@ export default function IngredientRecognition() {
     setResultImage(null);
 
     try {
-      const { data } = await axios.post(
+      const res = await axios.post(
         "https://al-3-tosol-back-end.onrender.com/image",
         { prompt: text },
-        { headers: { "Content-Type": "application/json" } }
+        {
+          headers: { "Content-Type": "application/json" },
+          timeout: 120000, // ✅ onrender cold start удаан байж магадгүй
+        }
       );
 
-      // ✅ backend: { success: true, image: "data:image/png;base64,..." }
-      if (!data?.success || !data?.image) {
-        setError(data?.error || "Failed to generate");
+      const data = res.data;
+
+      // ✅ хамгийн чухал: image-г олон хувилбараар хайж авна
+      const img =
+        data?.image ||
+        data?.result?.image ||
+        data?.data?.image ||
+        (typeof data === "string" ? data : null);
+
+      if (!img) {
+        // backend error message байвал тэрийг харуулна
+        const backendMsg = data?.error || data?.message;
+        setError(backendMsg || "Backend returned no image");
+        console.log("IMAGE API RAW RESPONSE:", data); // ✅ заавал console-доо хар
         return;
       }
 
-      setResultImage(data.image);
+      setResultImage(img);
     } catch (err) {
       console.error(err);
-
       const msg =
-        err?.response?.data?.error || err?.message || "Server connection error";
-
+        err?.response?.data?.error ||
+        err?.response?.data?.message ||
+        err?.message ||
+        "Server connection error";
       setError(msg);
     } finally {
       setIsAnalyzing(false);
