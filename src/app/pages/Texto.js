@@ -1,9 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import axios from "axios";
 import { RefreshCw, Sparkles, FileText } from "lucide-react";
-
-const DEFAULT_TEXT = "";
 
 const EXAMPLES = [
   {
@@ -24,17 +23,16 @@ const EXAMPLES = [
   },
 ];
 
+const DEFAULT_TEXT = EXAMPLES[0].text;
+
 // ✅ Back-end өөрчлөхгүй: data.result (string) -> [{name}] болгох parse
 function parseResultToIngredients(result) {
   if (!result || typeof result !== "string") return [];
 
-  // 1) code block байвал арилгана
   let text = result.replace(/```[\s\S]*?```/g, " ").trim();
-
-  // 2) "Ingredients:" гэх мэт гарчиг арилгана
   text = text.replace(/^\s*ingredients?\s*[:\-]\s*/i, "").trim();
 
-  // 3) JSON маягаар ирвэл барьж авна (зарим model ингэж өгдөг)
+  // JSON маягаар ирвэл барьж авна
   try {
     const maybe = JSON.parse(text);
     if (Array.isArray(maybe)) {
@@ -51,7 +49,6 @@ function parseResultToIngredients(result) {
     }
   } catch (_) {}
 
-  // 4) Newline-ээр салгах (bullet/number list)
   const lines = text
     .split("\n")
     .map((l) => l.trim())
@@ -59,21 +56,19 @@ function parseResultToIngredients(result) {
 
   let items = [];
 
-  // Нэг мөрөнд comma-тай list бол
   if (lines.length === 1 && lines[0].includes(",")) {
     items = lines[0].split(",").map((x) => x.trim());
   } else {
     items = lines.map((l) =>
       l
-        .replace(/^[-*•]\s*/, "") // - item / • item
-        .replace(/^\d+[\).\]]\s*/, "") // 1. item / 1) item
-        .replace(/\s*\(.*?\)\s*$/, "") // (optional) remove
-        .replace(/\.$/, "") // remove ending dot
+        .replace(/^[-*•]\s*/, "")
+        .replace(/^\d+[\).\]]\s*/, "")
+        .replace(/\s*\(.*?\)\s*$/, "")
+        .replace(/\.$/, "")
         .trim()
     );
   }
 
-  // 5) давхардал цэвэрлэх
   const map = new Map();
   for (const it of items) {
     const name = it.trim();
@@ -92,34 +87,33 @@ export default function Texto() {
   const [ingredients, setIngredients] = useState(null); // null | [] | [{name}]
   const [error, setError] = useState("");
 
+  const canGenerate = useMemo(() => text.trim().length > 0, [text]);
+
   const handleGenerate = async () => {
-    if (!canGenerate) return;
+    if (!canGenerate || loading) return;
 
     setLoading(true);
     setError("");
     setIngredients(null);
 
     try {
+      // ✅ Шууд backend рүү дуудна
       const { data } = await axios.post(
-        `${API_BASE}/ingredient-generator`,
+        "https://al-3-tosol-back-end.onrender.com/ingredient-generator",
         { description: text },
         { headers: { "Content-Type": "application/json" } }
       );
 
-      // ✅ Back-end чинь { result: "..." } буцаадаг тул эхлээд result-г авна
-      // Хэрвээ чи parse функцтэй бол тэрийгээ энд хэрэглэ
+      // ✅ backend чинь { result: "..." } гэж буцаана
       const resultText = data?.result || "";
-
-      // Хэрвээ чи өмнө нь parseResultToIngredients() хийсэн бол:
       const parsed = parseResultToIngredients(resultText);
 
       setIngredients(parsed);
     } catch (err) {
       console.error(err);
 
-      // axios error message
       const msg =
-        err?.response?.data?.error || err?.message || "Something went wrong";
+        err?.response?.data?.error || err?.message || "Server connection error";
 
       setError(msg);
       setIngredients([]);
@@ -182,7 +176,7 @@ export default function Texto() {
               </button>
             </div>
 
-            {/* ✅ Examples */}
+            {/* Examples */}
             <div className="mt-5 flex flex-wrap gap-2">
               {EXAMPLES.map((ex) => (
                 <button
@@ -200,6 +194,7 @@ export default function Texto() {
               ))}
             </div>
 
+            {/* Textarea */}
             <div className="mt-3 rounded-md border border-zinc-200 bg-white">
               <textarea
                 value={text}
@@ -209,12 +204,14 @@ export default function Texto() {
               />
             </div>
 
+            {/* Error */}
             {error ? (
               <div className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
                 {error}
               </div>
             ) : null}
 
+            {/* Generate */}
             <div className="mt-4 flex justify-end">
               <button
                 onClick={handleGenerate}
@@ -228,6 +225,7 @@ export default function Texto() {
               </button>
             </div>
 
+            {/* Result */}
             <div className="mt-10">
               <div className="flex items-center gap-2">
                 <FileText className="h-4 w-4 text-zinc-900" />
@@ -260,9 +258,7 @@ export default function Texto() {
               )}
             </div>
 
-            <p className="mt-6 text-xs text-zinc-400">
-              API: {API_BASE}/ingredient-generator
-            </p>
+            <p className="mt-6 text-xs text-zinc-400">Using proxy: </p>
           </div>
         )}
 
